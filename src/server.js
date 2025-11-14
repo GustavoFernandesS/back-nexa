@@ -13,14 +13,28 @@ const orcamentoRoutes = require('./routes/orcamento.routes');
 const app = express();
 
 const PORT = process.env.PORT || 3000;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5175';
+// Prefer configured FRONTEND_URL, otherwise default to the Netlify site
+// the user provided so CORS works immediately even without setting env vars.
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://nexagf.netlify.app';
 
 app.use(
   cors({
-    origin: FRONTEND_URL,
+    // Allow requests from the configured FRONTEND_URL. If FRONTEND_URL
+    // is not set, default to localhost dev URL.
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (origin === FRONTEND_URL) return callback(null, true);
+      return callback(new Error('CORS policy: origin not allowed'));
+    },
   }),
 );
 app.use(express.json({ limit: '2mb' }));
+
+// When behind a proxy (Render, Heroku, etc.) enable trust proxy so
+// req.protocol reflects the original scheme (http/https). This helps
+// building correct file URLs (https) when the app is behind a load
+// balancer or proxy.
+app.set('trust proxy', true);
 
 ensureDirectories([getStorageDir()]);
 

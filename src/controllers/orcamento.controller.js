@@ -36,8 +36,10 @@ async function criarOrcamentoController(req, res, next) {
     }
 
     // 3) Resposta com informações do arquivo
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const fileUrl = `${baseUrl}/storage/orcamentos/${fileName}`;
+    // Prefer using the configured FRONTEND_URL (set in environment)
+    // for generating public file URLs. Fallback to request protocol/host.
+    const configuredBase = process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`;
+    const fileUrl = `${configuredBase.replace(/\/$/, '')}/storage/orcamentos/${fileName}`;
     const message = emailResult
       ? 'Orçamento gerado e enviado com sucesso!'
       : 'Orçamento gerado com sucesso, mas falha ao enviar por e-mail.';
