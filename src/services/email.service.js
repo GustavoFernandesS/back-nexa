@@ -3,11 +3,11 @@
 const nodemailer = require('nodemailer');
 
 async function createTransport() {
-  // Em produção, exija variáveis SMTP configuradas
-  if (process.env.NODE_ENV === 'production') {
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      throw new Error('SMTP não configurado em produção. Defina SMTP_HOST, SMTP_USER e SMTP_PASS.');
-    }
+  // Tenta usar SMTP configurado. Se não houver variáveis de ambiente
+  // configuradas, cai para uma conta de teste Ethereal (fallback) e
+  // apenas loga um aviso. Isso evita falhas imediatas em ambientes
+  // onde ainda não se configurou SMTP (útil para deploys de teste).
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
     return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT || 587),
@@ -19,7 +19,7 @@ async function createTransport() {
     });
   }
 
-  // Ambiente de desenvolvimento: usar conta de teste Ethereal
+  console.warn('SMTP não configurado — usando conta de teste Ethereal como fallback. Configure SMTP_HOST/SMTP_USER/SMTP_PASS para envio real.');
   const testAccount = await nodemailer.createTestAccount();
   return nodemailer.createTransport({
     host: 'smtp.ethereal.email',
